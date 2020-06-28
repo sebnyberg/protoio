@@ -4,7 +4,7 @@ proto:
 	@protoc --go_out=. --go_opt=paths=source_relative test/test.proto
 
 bench:
-	go test . -bench=. -benchmem -memprofile=mem.pprof -cpuprofile=cpu.pprof
+	go test . -bench=. -benchtime=100x -benchmem -memprofile=mem.pprof -cpuprofile=cpu.pprof
 
 profile: bench
 	@go tool pprof -web protoio.test cpu.pprof

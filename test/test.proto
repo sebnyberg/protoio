@@ -4,10 +4,10 @@ package protoio.test;
 
 option go_package = "github.com/sebnyberg/protoio/test";
 
-message SimpleMessage {
-  int32 field = 1;
-}
-
-message SimpleMessageList {
-  repeated SimpleMessage fields = 1;
+message Person {
+  string name = 1;
+  string phone = 2;
+  int32 siblings = 3;
+  bool spouse = 4;
+  float money = 5;
 }

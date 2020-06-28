@@ -1,6 +1,7 @@
 package protoio
 
 import (
+	"bufio"
 	"encoding/binary"
 	"fmt"
 	"google.golang.org/protobuf/proto"
@@ -11,24 +12,18 @@ import (
 type Writer struct {
 	w      io.Writer
 	lenBuf []byte
-	getLen func(m proto.Message, msgLen int) []byte
 	msgBuf []byte
-	getMsg func(m proto.Message, msgLen int) ([]byte, error)
+	close  func() error
 }
 
-type Option func(*Writer)
+type WriterOption func(*Writer)
 
-// WithLenBuf re-uses an internal buffer for writing the message length.
-func WithLenBuf(w *Writer) {
-	w.lenBuf = make([]byte, 8)
-	w.getLen = func(m proto.Message, msgLen int) []byte {
-		binary.BigEndian.PutUint64(w.lenBuf, uint64(msgLen))
-		return w.lenBuf
-	}
+// WriteWithLenBuf re-uses an internal buffer for writing the message length.
+func WriteWithLenBuf(w *Writer) {
 }
 
-// WithoutLenBuf creates a buffer every time for writing the message length.
-func WithoutLenBuf(w *Writer) {
+// WriteWithoutLenBuf creates a buffer every time for writing the message length.
+func WriteWithoutLenBuf(w *Writer) {
 	w.getLen = func(m proto.Message, msgLen int) []byte {
 		lenBuf := make([]byte, 8)
 		binary.BigEndian.PutUint64(lenBuf, uint64(msgLen))
@@ -36,8 +31,8 @@ func WithoutLenBuf(w *Writer) {
 	}
 }
 
-// WithMsgBuf re-uses an internal buffer for writing messages.
-func WithMsgBuf(w *Writer) {
+// WriteWithMsgBuf re-uses an internal buffer for writing messages.
+func WriteWithMsgBuf(w *Writer) {
 	w.getMsg = func(m proto.Message, msgLen int) ([]byte, error) {
 		// Expand buffer if it is too small
 		if cap(w.msgBuf) < msgLen {
@@ -49,21 +44,38 @@ func WithMsgBuf(w *Writer) {
 	}
 }
 
-// WithoutMsgBuf creates a buffer every time a message is written.
-func WithoutMsgBuf(w *Writer) {
+// WriteWithoutMsgBuf creates a buffer every time a message is written.
+func WriteWithoutMsgBuf(w *Writer) {
 	w.getMsg = func(m proto.Message, msgLen int) ([]byte, error) {
 		return proto.Marshal(m)
 	}
 }
 
-func NewWriter(w io.Writer, options ...Option) *Writer {
-	wr := &Writer{
-		w: w,
+// WriteWithBufIO wraps the writer in a BufIO writer, improving performance
+// when writing to / from files
+func WriteWithBufIO(size int) WriterOption {
+	return func(w *Writer) {
+		writer := bufio.NewWriterSize(w.w, size)
+		w.close = func() error {
+			// Flush first, then close the embedded Writer
+			flushErr := writer.Flush()
+			if closer, ok := w.w.(io.Closer); ok {
+				// Ensure that embedded writer is closed even if flush fails
+				if err := closer.Close(); err != nil {
+					return err
+				}
+			}
+			return flushErr
+		}
+		w.w = writer
 	}
+}
 
-	// Default options
-	WithLenBuf(wr)
-	WithMsgBuf(wr)
+func NewWriter(w io.Writer, options ...WriterOption) *Writer {
+	wr := &Writer{
+		w:      w,
+		lenBuf: make([]byte, 8),
+	}
 
 	// Overrides
 	for _, opt := range options {
@@ -78,8 +90,8 @@ func (w *Writer) WriteMsg(m proto.Message) error {
 	msgLen := proto.Size(m)
 
 	// Write length of message
-	lenBytes := w.getLen(m, msgLen)
-	_, err := w.w.Write(lenBytes)
+	binary.BigEndian.PutUint64(w.lenBuf, uint64(msgLen))
+	_, err := w.w.Write(w.lenBuf)
 	if err != nil {
 		return fmt.Errorf("failed to write msg length, err: %w", err)
 	}
@@ -100,6 +112,9 @@ func (w *Writer) WriteMsg(m proto.Message) error {
 func (w *Writer) Close() error {
 	if closer, ok := w.w.(io.Closer); ok {
 		return closer.Close()
+	}
+	if w.close != nil {
+		return w.close()
 	}
 	return nil
 }
