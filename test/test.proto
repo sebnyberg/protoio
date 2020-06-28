@@ -4,25 +4,10 @@ package protoio.test;
 
 option go_package = "github.com/sebnyberg/protoio/test";
 
-message AllFields {
-  double Field1 = 1;
-  float Field2 = 2;
-  int32 Field3 = 3;
-  int64 Field4 = 4;
-  uint32 Field5 = 5;
-  uint64 Field6 = 6;
-  sint32 Field7 = 7;
-  sint64 Field8 = 8;
-  fixed32 Field9 = 9;
-  sfixed32 Field10 = 10;
-  fixed64 Field11 = 11;
-  sfixed64 Field12 = 12;
-  bool Field13 = 13;
-  string Field14 = 14;
-  bytes Field15 = 15;
+message SimpleMessage {
+  string message = 1;
 }
 
-message AllFieldsNested {
-  AllFields Field1 = 1;
-  repeated AllFields Field2 = 2;
+message SimpleMessageList {
+  repeated SimpleMessage messages = 1;
 }
