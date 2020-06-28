@@ -4,3 +4,5 @@
 *.pprof
 *.pdf
 *.test
+out
+*.log

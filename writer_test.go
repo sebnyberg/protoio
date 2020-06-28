@@ -2,6 +2,7 @@ package protoio_test
 
 import (
 	"fmt"
+	qt "github.com/frankban/quicktest"
 	"github.com/sebnyberg/protoio"
 	"github.com/sebnyberg/protoio/test"
 	"io"
@@ -9,6 +10,29 @@ import (
 	"os"
 	"testing"
 )
+
+func TestWriter_WriteMsg(t *testing.T) {
+	c := qt.New(t)
+
+	testPerson := test.Person{
+		Name:     "Bob",
+		Phone:    "07072738293",
+		Siblings: 4,
+		Spouse:   true,
+		Money:    1337,
+	}
+
+	f, err := os.OpenFile("out", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	c.Assert(err, qt.IsNil)
+	protoW := protoio.NewWriter(f)
+
+	numMsg := 1000
+	for i := 0; i < numMsg; i++ {
+		c.Assert(protoW.WriteMsg(&testPerson), qt.IsNil)
+	}
+
+	c.Assert(protoW.Close(), qt.IsNil)
+}
 
 func BenchmarkWriter_WriteMsg(b *testing.B) {
 	m := test.Person{
@@ -26,22 +50,8 @@ func BenchmarkWriter_WriteMsg(b *testing.B) {
 		getOutWriter func() (io.Writer, func())
 	}{
 		{
-			"Naive",
-			[]protoio.WriterOption{protoio.WriteWithoutLenBuf, protoio.WriteWithoutMsgBuf},
-			func() (io.Writer, func()) {
-				return ioutil.Discard, func() {}
-			},
-		},
-		{
-			"WriteWithLenBuf",
-			[]protoio.WriterOption{protoio.WriteWithoutMsgBuf},
-			func() (io.Writer, func()) {
-				return ioutil.Discard, func() {}
-			},
-		},
-		{
-			"WriteWithMsgBuf",
-			[]protoio.WriterOption{protoio.WriteWithMsgBuf},
+			"InMem",
+			nil,
 			func() (io.Writer, func()) {
 				return ioutil.Discard, func() {}
 			},
