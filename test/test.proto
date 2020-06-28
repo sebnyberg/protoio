@@ -5,9 +5,9 @@ package protoio.test;
 option go_package = "github.com/sebnyberg/protoio/test";
 
 message SimpleMessage {
-  string message = 1;
+  int32 field = 1;
 }
 
 message SimpleMessageList {
-  repeated SimpleMessage messages = 1;
+  repeated SimpleMessage fields = 1;
 }
