@@ -10,11 +10,11 @@ import (
 
 // Writer writes protobuf messages to an io.Writer
 type Writer struct {
-	w         io.Writer
-	lenBuf    []byte
-	msgBuf    []byte
-	close     func() error
-	byteOrder binary.ByteOrder
+	w           io.Writer
+	lenBuf      []byte
+	msgBuf      []byte
+	writeMsgLen func(int) error
+	close       func() error
 }
 
 type WriterOption func(*Writer)
@@ -39,17 +39,42 @@ func WriteWithBufIO(size int) WriterOption {
 	}
 }
 
-func WriteWithByteOrder(bo binary.ByteOrder) WriterOption {
-	return func(r *Writer) {
-		r.byteOrder = bo
+// WriteWithDelimiter sets the byte order and type for the message delimiter
+func WriteWithDelimiter(bo binary.ByteOrder, delimType DelimiterType) WriterOption {
+	return func(w *Writer) {
+		switch delimType {
+		case DelimiterTypeUint32:
+			w.lenBuf = make([]byte, LenBytesUint32)
+			w.writeMsgLen = func(msgLen int) error {
+				bo.PutUint32(w.lenBuf, uint32(msgLen))
+				_, err := w.w.Write(w.lenBuf)
+				return err
+			}
+		case DelimiterTypeUint64:
+			w.lenBuf = make([]byte, LenBytesUint64)
+			w.writeMsgLen = func(msgLen int) error {
+				bo.PutUint64(w.lenBuf, uint64(msgLen))
+				_, err := w.w.Write(w.lenBuf)
+				return err
+			}
+		default:
+			panic("unknown lentype")
+		}
 	}
 }
 
+// NewWriter returns a streaming Protobuf writer.
+// By default, the byte order is set to BigEndian and the length
+// delimiter to uint32. This behaviour can be changed by providing
+// the WriteWithDelimiter() option to this constructor
 func NewWriter(w io.Writer, options ...WriterOption) *Writer {
 	wr := &Writer{
 		w:      w,
 		lenBuf: make([]byte, 8),
 	}
+
+	// Default options
+	WriteWithDelimiter(binary.BigEndian, DelimiterTypeUint32)(wr)
 
 	for _, opt := range options {
 		opt(wr)
@@ -63,10 +88,8 @@ func (w *Writer) WriteMsg(m proto.Message) error {
 	msgLen := proto.Size(m)
 
 	// Write length of message
-	w.byteOrder.PutUint32(w.lenBuf, uint32(msgLen))
-	_, err := w.w.Write(w.lenBuf)
-	if err != nil {
-		return fmt.Errorf("failed to write msg length, err: %w", err)
+	if err := w.writeMsgLen(msgLen); err != nil {
+		return fmt.Errorf("failed to write message length: %w", err)
 	}
 
 	// Expand buffer if it is too small
@@ -77,13 +100,13 @@ func (w *Writer) WriteMsg(m proto.Message) error {
 	// Read message into buffer
 	msgBytes, err := proto.MarshalOptions{}.MarshalAppend(w.msgBuf[:0], m)
 	if err != nil {
-		return fmt.Errorf("failed to get msg bytes, err: %w", err)
+		return fmt.Errorf("failed to marshal msg bytes: %w", err)
 	}
 
 	// Write message
 	_, err = w.w.Write(msgBytes)
 	if err != nil {
-		return fmt.Errorf("failed to write msg, err: %w", err)
+		return fmt.Errorf("failed to write msg: %w", err)
 	}
 
 	return nil

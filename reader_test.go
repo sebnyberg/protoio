@@ -19,6 +19,29 @@ var m = test.Person{
 	Money:    1337,
 }
 
+func TestReader_ReadMsg(t *testing.T) {
+	var buf bytes.Buffer
+
+	// Write one message
+	protoWriter := protoio.NewWriter(&buf)
+	err := protoWriter.WriteMsg(&m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = protoWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Read one message
+	protoReader := protoio.NewReader(&buf)
+	var out test.Person
+	err = protoReader.ReadMsg(&out)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func BenchmarkReader_ReadMsg_FromMemoryBuffer_1000(b *testing.B) {
 	numMsg := 1000
 	for i := 0; i < b.N; i++ {
