@@ -103,7 +103,7 @@ Benchmark for reading/writing 1k messages.
 
 When working with files, provide `protoio.ReadWithBufIO(size)` and `protoio.WriteWithBufIO(size)` as options to the reader and write respectively.
 
-As can be seen in the benchmarks below, using BufIO when reading to/from files will improve performance significantly.
+As can be seen in the benchmarks below, using BufIO when reading to/from improves performance significantly.
 
 ```bash
 $ go test . -bench=. -benchmem
