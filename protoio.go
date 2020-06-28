@@ -7,23 +7,36 @@ import (
 	"io"
 )
 
-type Writer interface {
-	WriteMsg(proto.Message) error
-	io.Closer
+type Writer struct {
+	w      io.Writer
+	lenBuf []byte
 }
 
-type writer struct {
-	w io.Writer
+func WithLenBuf(w *Writer) {
+	w.lenBuf = make([]byte, 0, 8)
 }
 
-func NewWriter(w io.Writer) Writer {
-	return &writer{
+func WithoutLenBuf(w *Writer) {
+	w.lenBuf = nil
+}
+
+func NewWriter(w io.Writer, options ...func(*Writer)) *Writer {
+	wr := &Writer{
 		w: w,
 	}
+
+	// Default options
+	WithLenBuf(wr)
+
+	for _, opt := range options {
+		opt(wr)
+	}
+
+	return wr
 }
 
 // WriteMsg writes one protobuf message to the embedded writer
-func (w *writer) WriteMsg(m proto.Message) error {
+func (w *Writer) WriteMsg(m proto.Message) error {
 	// Write length of message
 	lenBuf := make([]byte, 8)
 	binary.BigEndian.PutUint64(lenBuf, uint64(proto.Size(m)))
@@ -45,7 +58,7 @@ func (w *writer) WriteMsg(m proto.Message) error {
 	return nil
 }
 
-func (w *writer) Close() error {
+func (w *Writer) Close() error {
 	if closer, ok := w.w.(io.Closer); ok {
 		return closer.Close()
 	}
