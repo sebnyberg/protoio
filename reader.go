@@ -21,16 +21,16 @@ type Reader struct {
 // ReaderOption changes the behaviour of the reader.
 type ReaderOption func(*Reader)
 
-// ReadWithMsgSizeMax sets the maximum protobuf message size.
-func ReadWithMsgSizeMax(size int) ReaderOption {
+// ReaderMaxMsgSize sets the maximum protobuf message size.
+func ReaderMaxMsgSize(size int) ReaderOption {
 	return func(r *Reader) {
 		r.msgSizeMax = size
 	}
 }
 
-// ReadWithBufIO wraps the reader in a BufIO reader. This is an effective
+// ReaderWithBufIO wraps the reader in a BufIO reader. This is an effective
 // way of improving speed when reading to and from files.
-func ReadWithBufIO(size int) ReaderOption {
+func ReaderWithBufIO(size int) ReaderOption {
 	return func(r *Reader) {
 		reader := bufio.NewReaderSize(r.r, size)
 		r.close = func() error {
@@ -46,8 +46,8 @@ func ReadWithBufIO(size int) ReaderOption {
 	}
 }
 
-// ReadWithDelimiter sets the byte order and type for the message delimiter
-func ReadWithDelimiter(bo binary.ByteOrder, delimType DelimiterType) ReaderOption {
+// ReaderDelimiter sets the byte order and type for the message delimiter
+func ReaderDelimiter(bo binary.ByteOrder, delimType DelimiterType) ReaderOption {
 	return func(r *Reader) {
 		switch delimType {
 		case DelimiterTypeUint32:
@@ -74,7 +74,7 @@ func ReadWithDelimiter(bo binary.ByteOrder, delimType DelimiterType) ReaderOptio
 
 // NewReader returns a streaming Protobuf message reader
 // By default, the reader uses binary.BigEndian and Uint32,
-// To change this behaviour, pass the ReadWithDelimiter option to this constructor
+// To change this behaviour, pass the ReaderDelimiter option to this constructor
 // If a  read message exceeds the MsgSizeMax, an error will be returned by the reader
 func NewReader(r io.Reader, options ...ReaderOption) *Reader {
 	rr := &Reader{
@@ -82,8 +82,8 @@ func NewReader(r io.Reader, options ...ReaderOption) *Reader {
 	}
 
 	// Recommended max Protobuf message size (4MB)
-	ReadWithMsgSizeMax(1024 * 1024 * 4)(rr)
-	ReadWithDelimiter(binary.BigEndian, DelimiterTypeUint32)(rr)
+	ReaderMaxMsgSize(1024 * 1024 * 4)(rr)
+	ReaderDelimiter(binary.BigEndian, DelimiterTypeUint32)(rr)
 
 	for _, opt := range options {
 		opt(rr)

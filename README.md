@@ -12,6 +12,8 @@ To enable streaming Protobuf messages, this library prefixes each message by its
 
 ## Basic usage
 
+__NOTE__: This package assumes the use of the Protobuf V2 API.
+
 ### In-memory
 
 ```go
@@ -91,11 +93,11 @@ if err := protoReader.Close(); err != nil {
 
 | Option | Default | Description | 
 | --- | --- | --- |
-| ReadWithMsgSizeMax(size int) | 4MB (1024 * 1024 * 4) | Maximum allowed message size when reading |
-| ReadWithBufIO(bufSize int) | disabled | Wrap in BufIO reader. Useful for reading from files |
-| ReadWithDelimiter(bo binary.ByteOrder, delimType DelimiterType) | binary.BigEndian, DelimiterTypeUint32 | Length delimiter type |
-| WriteWithBufIO(bufSize int) | disabled | Wrap in BufIO writer. Useful for writing to files |
-| WriteWithDelimiter(bo binary.ByteOrder, delimType DelimiterType) | binary.BigEndian, DelimiterTypeUint32 | Length delimiter type |
+| `ReaderMsgSizeMax(size int)` | 4MB (1024 * 1024 * 4) | Maximum allowed message size when reading |
+| `ReaderWithBufIO(bufSize int)` | disabled | Wrap in BufIO reader. Useful for reading from files |
+| `ReaderDelimiter(bo binary.ByteOrder, delimType DelimiterType)` | binary.BigEndian, DelimiterTypeUint32 | Length delimiter type |
+| `WriterWithBufIO(bufSize int)` | disabled | Wrap in BufIO writer. Useful for writing to files |
+| `WriterDelimiter(bo binary.ByteOrder, delimType DelimiterType)` | binary.BigEndian, DelimiterTypeUint32 | Length delimiter type |
 
 ## Benchmarks
 

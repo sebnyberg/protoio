@@ -76,7 +76,7 @@ func BenchmarkReader_ReadMsg_FromFile(b *testing.B) {
 		opts []protoio.ReaderOption
 	}{
 		{"Direct", nil},
-		{"WithBufIO", []protoio.ReaderOption{protoio.ReadWithBufIO(1024 * 1024)}},
+		{"WithBufIO", []protoio.ReaderOption{protoio.ReaderWithBufIO(1024 * 1024)}},
 	} {
 		context := fmt.Sprintf("%v_%v", benchCase.name, numMsg)
 
@@ -113,7 +113,7 @@ func BenchmarkReader_ReadMsg_FromFile(b *testing.B) {
 }
 
 func writeMessages(numMsg int, w io.Writer) {
-	protoW := protoio.NewWriter(w, protoio.WriteWithBufIO(1024*1024))
+	protoW := protoio.NewWriter(w, protoio.WriterWithBufIO(1024*1024))
 	var err error
 	for i := 0; i < numMsg; i++ {
 		err = protoW.WriteMsg(&m)

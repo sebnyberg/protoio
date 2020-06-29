@@ -19,9 +19,9 @@ type Writer struct {
 
 type WriterOption func(*Writer)
 
-// WriteWithBufIO wraps the writer in a BufIO writer, improving performance
+// WriterWithBufIO wraps the writer in a BufIO writer, improving performance
 // when writing to / from files
-func WriteWithBufIO(size int) WriterOption {
+func WriterWithBufIO(size int) WriterOption {
 	return func(w *Writer) {
 		writer := bufio.NewWriterSize(w.w, size)
 		w.close = func() error {
@@ -39,8 +39,8 @@ func WriteWithBufIO(size int) WriterOption {
 	}
 }
 
-// WriteWithDelimiter sets the byte order and type for the message delimiter
-func WriteWithDelimiter(bo binary.ByteOrder, delimType DelimiterType) WriterOption {
+// WriterDelimiter sets the byte order and type for the message delimiter
+func WriterDelimiter(bo binary.ByteOrder, delimType DelimiterType) WriterOption {
 	return func(w *Writer) {
 		switch delimType {
 		case DelimiterTypeUint32:
@@ -66,7 +66,7 @@ func WriteWithDelimiter(bo binary.ByteOrder, delimType DelimiterType) WriterOpti
 // NewWriter returns a streaming Protobuf writer.
 // By default, the byte order is set to BigEndian and the length
 // delimiter to uint32. This behaviour can be changed by providing
-// the WriteWithDelimiter() option to this constructor
+// the WriterDelimiter() option to this constructor
 func NewWriter(w io.Writer, options ...WriterOption) *Writer {
 	wr := &Writer{
 		w:      w,
@@ -74,7 +74,7 @@ func NewWriter(w io.Writer, options ...WriterOption) *Writer {
 	}
 
 	// Default options
-	WriteWithDelimiter(binary.BigEndian, DelimiterTypeUint32)(wr)
+	WriterDelimiter(binary.BigEndian, DelimiterTypeUint32)(wr)
 
 	for _, opt := range options {
 		opt(wr)

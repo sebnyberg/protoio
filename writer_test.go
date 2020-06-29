@@ -63,7 +63,7 @@ func BenchmarkWriter_WriteMsg(b *testing.B) {
 		},
 		{
 			"ToFileBufIO",
-			[]protoio.WriterOption{protoio.WriteWithBufIO(1024 * 1024)},
+			[]protoio.WriterOption{protoio.WriterWithBufIO(1024 * 1024)},
 			getTempFile,
 		},
 	} {
