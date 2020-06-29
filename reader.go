@@ -47,9 +47,9 @@ func ReadWithBufIO(size int) ReaderOption {
 }
 
 // ReadWithDelimiter sets the byte order and type for the message delimiter
-func ReadWithDelimiter(bo binary.ByteOrder, lenType DelimiterType) ReaderOption {
+func ReadWithDelimiter(bo binary.ByteOrder, delimType DelimiterType) ReaderOption {
 	return func(r *Reader) {
-		switch lenType {
+		switch delimType {
 		case DelimiterTypeUint32:
 			r.lenBuf = make([]byte, LenBytesUint32)
 			r.getMsgLen = func() (int, error) {
