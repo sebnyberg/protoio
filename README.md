@@ -20,7 +20,7 @@ __NOTE__: This package assumes the use of the Protobuf V2 API.
 // Write one message
 protoWriter := protoio.NewWriter(&buf)
 
-m := pb.User{ Name: "Seb" }
+m := test.Person{ Name: "Seb" }
 err := protoWriter.WriteMsg(&m)
 if err != nil {
     log.Fatal(err)
@@ -34,7 +34,7 @@ if err != nil {
 // Read one message
 protoReader := protoio.NewReader(&buf)
 
-var out pb.User
+var out test.Person
 err = protoReader.ReadMsg(&out)
 if err != nil {
     log.Fatal(err)
@@ -54,7 +54,7 @@ if err != nil {
 protoWriter := protoio.NewWriter(outFile, protoio.WriteWithBufIO(1024*1024))
 
 // Write the same message 10k times
-m := pb.User{ Name: "Seb" }
+m := test.Person{ Name: "Seb" }
 for i := 0; i < 10000; i++ {
     err := protoWriter.WriteMsg(&m)
     if err != nil {
@@ -69,14 +69,14 @@ if err != nil {
 }
 
 // Open the file again
-inFile, err := os.OpenFile("out.ldproto", os.O_RWONLY, 0644)
+inFile, err := os.OpenFile("out.ldproto", os.O_RDONLY, 0644)
 if err != nil {
     log.Fatal(err)
 }
 
 // Read a ton of Sebs
 protoReader := protoio.NewReader(inFile, protoio.ReadWithBufIO(1024*1024))
-aTonOfSebs := make([]pb.User, 10000)
+aTonOfSebs := make([]test.Person, 10000)
 
 for i := 0; i < 10000; i++ {
     err = protoReader.ReadMsg(&aTonOfSebs[i])
