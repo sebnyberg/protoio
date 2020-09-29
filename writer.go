@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"encoding/binary"
 	"fmt"
-	"google.golang.org/protobuf/proto"
 	"io"
+
+	"google.golang.org/protobuf/proto"
 )
 
 // Writer writes protobuf messages to an io.Writer
@@ -24,11 +25,11 @@ type WriterOption func(*Writer)
 func WriterWithBufIO(size int) WriterOption {
 	return func(w *Writer) {
 		writer := bufio.NewWriterSize(w.w, size)
+		closer, ok := w.w.(io.Closer)
 		w.close = func() error {
 			// Flush first, then close the embedded Writer
 			flushErr := writer.Flush()
-			if closer, ok := w.w.(io.Closer); ok {
-				// Ensure that embedded writer is closed even if flush fails
+			if ok {
 				if err := closer.Close(); err != nil {
 					return err
 				}
