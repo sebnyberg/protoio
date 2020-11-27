@@ -4,11 +4,9 @@ Helper functions for writing length-delimited Protobuf messages in Go.
 
 ## Why do I need this?
 
-Because of Protobuf's binary format, it is not possible to write multiple messages to a single file or stream without losing the ability to decode the messages again. 
+Because of Protobuf's binary format, it is not possible to write multiple messages to a single file or stream without losing the ability to decode the messages on the other end.
 
-To circumvent this problem, people tend to write massive wrapper messages instead. Since each message needs to be decoded in its entirety in memory before it can be accessed, this is both dangerous and inefficient.
-
-To enable streaming Protobuf messages, this library prefixes each message by its length before writing it to the stream.
+This library prefixes each message with the length of the next message, allowing the reader to decode messages one-by-one.
 
 ## Basic usage
 
